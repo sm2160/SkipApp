@@ -15,7 +15,7 @@ Community Collaboration: Join a vibrant community of users and local businesses 
 Environmental Consciousness: Minimize carbon footprint with eco-friendly delivery options.
 Installation:
 
-Clone the repository: git clone https://github.com/yourusername/skip-app.git
+Clone the repository: git clone https://github.com/sm2160/SkipApp.git
 Navigate to the project directory: cd skip-app
 Install dependencies: npm install
 Start the application: npm start
