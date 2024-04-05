@@ -1,0 +1,361 @@
+@import url('https://fonts.googleapis.com/css?family=Montserrat:600|Open+Sans:600&display=swap');
+
+#map {
+  height: 100vh;
+  width: 100%;
+  position: fixed;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #333333;
+  transition: opacity 0.95s, visibility 0.75s;
+  z-index: 20;
+}
+
+.loader--hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.loader::after {
+  content: "";
+  width: 75px;
+  height: 75px;
+  border: 15px solid #dddddd;
+  border-top-color: green; /* Change this to a valid color or define a CSS variable */
+  border-radius: 50%;
+  animation: loading 0.85s ease infinite;
+}
+
+@keyframes loading {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg); /* Replace 1turn with 360deg */
+  }
+}
+  
+.sidebar {
+  position: fixed;
+  width: 240px;
+  left: -240px;
+  height: 100%;
+  background: #1e1e1e;
+  transition: left 0.5s ease;
+  z-index: 5;
+}
+
+.sidebar header {
+  font-size: 28px;
+  color: white;
+  line-height: 70px;
+  text-align: center;
+  background: #1b1b1b;
+  user-select: none;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.sidebar a {
+  display: block;
+  height: 65px;
+  width: 100%;
+  color: white;
+  line-height: 65px;
+  box-sizing: border-box;
+  border-bottom: 1px solid black;
+  border-top: 1px solid rgba(255, 255, 255, .1);
+  border-left: 5px solid transparent;
+  font-family: 'Open Sans', sans-serif;
+  transition: all 0.5s ease;
+}
+
+a.active,
+a:hover {
+  border-left: 5px solid #b93632;
+  color: #b93632;
+}
+
+.sidebar a i {
+  font-size: 23px;
+  margin-right: 16px;
+}
+
+.sidebar a span {
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: white;
+}
+
+#check {
+  display: none;
+  z-index: 5;
+}
+
+label #btn,
+label #cancel {
+  position: absolute;
+  cursor: pointer;
+  color: white;
+  border-radius: 5px;
+  border: 1px solid #262626;
+  margin: 15px 30px;
+  font-size: 29px;
+  background: #262626;
+  height: 45px;
+  width: 45px;
+  text-align: center;
+  line-height: 45px;
+  transition: all 0.5s ease;
+  z-index: 5;
+  right: 30px;
+}
+
+label #cancel {
+  opacity: 0;
+  visibility: hidden;
+}
+
+#check:checked~.sidebar {
+  left: 0;
+}
+
+#check:checked~label #btn {
+  margin-left: 245px;
+  opacity: 0;
+  visibility: hidden;
+}
+
+#check:checked~label #cancel {
+  margin-left: 245px;
+  opacity: 1;
+  visibility: visible;
+}
+
+.center-container {
+        text-align: center;
+    }
+
+    .center-container label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .center-container input[type="checkbox"] {
+        margin-bottom: 10px;
+    }
+
+/* Style for the file input button */
+#uploadImage {
+    background-color: cyan;
+    color: black;
+    border: 2px solid black;
+    border-radius: 5px;
+    padding: 10px 20px; /* Adjust the padding as needed */
+    margin: 10px auto; /* Add some margin for spacing */
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#uploadImage:hover {
+    background-color: #000; 
+    color: white; 
+}
+
+
+/* Style for the hidden input fields and button */
+#latitude,
+#longitude,
+#submitButton {
+    display: block;
+    margin: 10px auto; /* Add some margin for spacing */
+}
+
+#submitButton {
+    background-color: cyan;
+    color: black;
+    border: 2px solid black;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#submitButton:hover {
+    background-color: #000; 
+    color: white; 
+}
+
+
+
+
+
+/* Style for the modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: cyan;
+  padding: 20px;
+  padding-right: 40px;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 2px solid #000;
+}
+
+/* Style for the close button */
+.close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 10px;
+  cursor: pointer;
+}
+
+/* Style for the transparent button */
+.transparent-button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+#markerTitle {
+  border: 2px solid #000;
+  border-radius: 10px;
+  padding: 10px;
+  width: 100%;
+  margin: 5px;
+}
+
+#markerDescription {
+  border: 2px solid #000;
+  border-radius: 10px;
+  padding: 10px;
+  width: 100%;
+  margin: 5px;
+}
+
+h2 {
+  text-align: center;
+}
+
+/* Style for the button */
+.icon-button {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+
+/* Style for the button's icon */
+.icon-button i {
+  margin-right: 5px;
+}
+
+.file-input-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  display: inline-block;
+}
+
+/* Style for the file input field (hidden) */
+#imageUpload {
+  display: none;
+}
+
+img {
+  height: 30px;
+  width: 30px;
+}
+
+.leaflet-popup-content {
+  min-width: 200px;
+  min-height: 200px;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: column;
+  align-content: center;
+  align-items: stretch;
+}
+
+/* Style for the title */
+.leaflet-popup-content b {
+  font-size: 18px;
+  color: #333;
+}
+
+/* Style for the description */
+.leaflet-popup-content p {
+  font-size: 14px;
+  color: #555;
+}
+
+/* Style for the selected image */
+.leaflet-popup-content img.selected-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin-top: 10px;
+}
+
+/* Style for the image upload picture */
+.leaflet-popup-content img.uploaded-image {
+  max-width: 100%;
+  height: 100px;
+  display: block;
+  margin-top: 10px;
+}
+
+/* Style for the images container (if needed) */
+.leaflet-popup-content .images-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+
+/* Style for the close button (optional) */
+.leaflet-popup-close-button {
+  /*display: none;  Hide the close button */
+}
+
+.leaflet-div-icon {
+  background: none;
+  border: none;
+}
+
+
+
+

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skip App</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+</head>
+<body>
+    <input type="checkbox" id="check">
+    <label for="check">
+        <i class="fas fa-bars" id="btn"></i>
+        <i class="fas fa-times" id="cancel"></i>
+    </label>
+    
+    <div class="loader"></div>
+
+    <div class="sidebar">
+        <header>Menu</header>
+
+        <a href="#" id="addMarkerLink">
+            <i class="fas fa-plus"></i>
+            <button class="transparent-button" onclick="openModal()"><span>Add Marker</span></button>
+        </a>
+
+        <div id="myModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2>Add Marker</h2>
+
+               <form id="markerForm" onsubmit="return validateForm()" action="upload.php" method="post" enctype="multipart/form-data">
+                <label for="markerTitle">Title:</label>
+                <input type="text" name="markerTitle" id="markerTitle" placeholder="Enter title" required>
+                <br>
+            
+                <label for="markerDescription">Description:</label>
+                <textarea id="markerDescription" name="markerDescription" placeholder="Enter description" required></textarea>
+                
+                <br>
+                
+               <div class="center-container">
+                <label for="skips">Skips:</label>
+                <input type="checkbox" id="skips" name="skips">
+
+
+                <label for="freeCollection">Free Collection:</label>
+                <input type="checkbox" id="freeCollection" name="freeCollection">
+                </div>
+
+
+                <input type="hidden" name="skipsHidden" id="skipsHidden">
+                <input type="hidden" name="freeCollectionHidden" id="freeCollectionHidden">
+                
+                <br>
+            
+                <label for="selectedImage">Select an Image:</label>
+                <select name="selectedImage" id="selectedImage" required>
+                    <option value="images/household.png">Household Materials</option>
+                    <option value="images/raw-materials.png">Raw Materials</option>
+                </select>
+                <br>
+            
+                <label for="uploadImage">Choose File:</label>
+                <input type="file" name="uploadImage" id="uploadImage" accept="image/*" >
+                <br>
+
+            
+           <input type="hidden" name="latitude" id="latitude">
+            <input type="hidden" name="longitude" id="longitude">
+            <button type="submit" id="submitButton">Add Marker</button>
+                </form>
+
+            </div>
+        </div>
+                
+    </div>
+
+    <div id="map"></div>
+            <button id="locateButton" class="locate-button" style="
+    position: fixed;
+    bottom: 20px;
+    right: 10px;
+    background-color: lightblue;
+    color: #000;
+    padding: 15px; 
+    width: 150px; 
+    height: 60px; 
+    text-align: center; 
+    line-height: 30px; 
+    cursor: pointer;
+    font-size: larger;
+"><i class="fas fa-crosshairs"></i> Locate Me</button>
+    
+  <script>
+    var map;
+   var markers = L.markerClusterGroup({
+    iconCreateFunction: function (cluster) {
+        var childCount = cluster.getChildCount();
+        var iconSize = [40, 40];
+
+        return new L.DivIcon({
+            html: '<div><img src="images/cluster.png" style="width: 100%; height: 100%;"></div>',
+            iconSize: iconSize
+        });
+    }
+});
+    var myLocationMarker; // Declare myLocationMarker globally
+
+    function validateForm() {
+    var fileInput = document.getElementById('uploadImage');
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('Please choose a file');
+        return false; // prevent form submission
+    }
+
+    return true; // allow form submission
+}
+
+
+    function initializeMap() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                const { latitude, longitude } = position.coords;
+                map = L.map('map').setView([latitude, longitude], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                }).addTo(map);
+
+                // Fetch markers from the database
+                fetch('api_get_markers.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Add retrieved markers to the map
+                        data.forEach(marker => {
+                            addMarkerToMap(marker);
+                        });
+
+                        // Add a marker for your current location
+                        myLocationMarker = L.marker([latitude, longitude])
+                            .addTo(markers) // Add to the MarkerClusterGroup
+                            .bindPopup("Your Current Location")
+                            .openPopup();
+
+                        // Zoom to your current location
+                        map.setView([latitude, longitude], 15);
+
+                        // Add the MarkerClusterGroup to the map
+                        map.addLayer(markers);
+                    })
+                    .catch(error => console.error('Error fetching markers:', error));
+            }, function (error) {
+                console.error('Error getting geolocation:', error.message);
+            });
+        } else {
+            console.error('Geolocation is not supported by your browser');
+        }
+    }
+
+
+   var markerDataArray = [];
+
+function addMarkerToMap(markerData, skipsCheckbox, freeCollectionCheckbox) {
+    const { id, title, description, selectedImage, uploadImage, latitude, longitude, skips, freeCollection } = markerData;
+
+    // Customize content based on checkboxes
+    let content = `<b>${title}</b><br>${description}<br><img src="${selectedImage}" alt="Selected Image"><br><img src="api_get_image.php?filename=${uploadImage}" alt="Uploaded Image" style="min-width: 100%; min-height: 200px; border: 2px solid #000"><br>Skips: ${skips ? "Yes" : "No"}<br>Free Collection: ${freeCollection ? "Yes" : "No"}`;
+
+    // Add a button to mark as taken
+    content += `<button onclick="markAsTaken(${id})">Taken</button>`;
+
+    // Create a new marker with the customized popup content
+    const newMarker = L.marker([latitude, longitude], { id: id })
+        .bindPopup(content);
+
+    // Store marker data for later access
+    markerDataArray.push({
+        id: id,
+        marker: newMarker,
+        title: title,
+        description: description,
+        selectedImage: selectedImage,
+        uploadImage: uploadImage,
+        skips: skips,
+        freeCollection: freeCollection
+    });
+
+    markers.addLayer(newMarker); // Add to the MarkerClusterGroup
+}
+
+
+function markAsTaken(id) {
+    console.log('markerDataArray length:', markerDataArray.length);
+    console.log('Received markerId:', id);
+    const markerData = markerDataArray.find(data => String(data.id) === String(id));
+    console.log('Found markerData:', markerData);
+
+    if (markerData) {
+        const isConfirmed = window.confirm("Do you wish to remove the marker from the map?");
+
+        if (isConfirmed) {
+            // Send a request to the server to remove the marker permanently
+            fetch(`api_remove_marker.php?id=${id}`, { // Use 'id' in the URL
+                method: 'DELETE',
+            })
+            .then(response => response.text())
+            .then(message => {
+                // Remove the marker from the map and the cluster group
+                markers.removeLayer(markerData.marker);
+
+                console.log(`Marker ${id} is permanently removed from the map: ${message}`);
+            })
+            .catch(error => console.error('Error removing marker:', error));
+        } else {
+            console.log(`User decided not to remove the marker.`);
+        }
+    }
+}
+
+
+    function openModal() {
+        var modal = document.getElementById("myModal");
+        modal.style.display = "block";
+    }
+
+    function closeModal() {
+        var modal = document.getElementById("myModal");
+        modal.style.display = "none";
+    }
+
+    function handleFormSubmission(event) {
+    event.preventDefault(); // Prevent the default form submission
+
+    const title = document.getElementById("markerTitle").value;
+    const description = document.getElementById("markerDescription").value;
+    const selectedImage = document.getElementById("selectedImage").value;
+
+    // Check if the "skips" checkbox is checked
+    const skipsCheckbox = document.getElementById("skips");
+    const skips = skipsCheckbox.checked ? "Yes" : "No";
+
+    // Check if the "freeCollection" checkbox is checked
+    const freeCollectionCheckbox = document.getElementById("freeCollection");
+    const freeCollection = freeCollectionCheckbox.checked ? "Yes" : "No";
+
+    // Set the values of hidden fields
+    document.getElementById("skipsHidden").value = skips;
+    document.getElementById("freeCollectionHidden").value = freeCollection;
+
+    // Get latitude and longitude
+    navigator.geolocation.getCurrentPosition(function (position) {
+        const { latitude, longitude } = position.coords;
+
+        // Set the values of hidden fields
+        document.getElementById("latitude").value = latitude;
+        document.getElementById("longitude").value = longitude;
+
+        // Use FormData to handle file upload
+        const formData = new FormData(event.target);
+
+        // Add the marker to the map with the selected color
+        addMarkerToMap({
+            title,
+            description,
+            selectedImage,
+            uploadImage: formData.get("uploadImage"), // Use FormData to get the correct file path
+            latitude,
+            longitude,
+            skips,
+            freeCollection,
+        });
+
+        closeModal();
+
+        // Send data to the server for storage
+        fetch('api_add_marker.php', {
+            method: 'POST',
+            body: formData,
+        })
+            .then(response => response.text())
+            .then(message => {
+                console.log(message);
+                 location.reload();
+            })
+            .catch(error => console.error('Error adding marker:', error));
+    });
+}
+
+
+    // Add an event listener to the form
+    document.getElementById("markerForm").addEventListener("submit", handleFormSubmission);
+
+    // Use Promise.all to wait for both geolocation and marker fetch
+    Promise.all([
+        new Promise((resolve, reject) => {
+            initializeMap();
+            resolve();
+        })
+    ]).then(() => {
+        // Additional initialization or actions if needed
+    });
+    
+    document.addEventListener('DOMContentLoaded', function () {
+    // Add an event listener to the Locate Me button
+    document.getElementById('locateButton').addEventListener('click', function () {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                const { latitude, longitude } = position.coords;
+
+                // Set the map view to the current location
+                map.setView([latitude, longitude], 15);
+
+                // Update the marker for the current location
+                myLocationMarker.setLatLng([latitude, longitude]);
+
+                // Open the popup for the updated marker
+                myLocationMarker.openPopup();
+            }, function (error) {
+                console.error('Error getting geolocation:', error.message);
+            });
+        } else {
+            console.error('Geolocation is not supported by your browser');
+        }
+    });
+});
+
+
+    window.addEventListener("load", () => {
+
+     const loader = document.querySelector(".loader");
+
+      if (loader && loader.parentNode === document.body) {
+
+        loader.classList.add("loader--hidden");
+        loader.addEventListener("transitionend", () => {
+          setTimeout(() => {
+            loader.remove();
+          }, 600); // Adjust the timeout duration (in milliseconds) 
+        });
+      }
+    });
+</script>
+
+</body>
+</html>
